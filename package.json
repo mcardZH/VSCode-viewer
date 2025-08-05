@@ -1,11 +1,11 @@
 {
-  "name": "protein-viewer",
-  "displayName": "Protein Viewer",
-  "description": "Visualise 3D biological structures in the editor",
-  "version": "0.1.1",
-  "publisher": "ArianJamasb",
+  "name": "msv",
+  "displayName": "Molecular Simulation Visualizer",
+  "description": "Provides visualization support for molecular structures and trajectories from Gromacs and other molecular simulation software, facilitating research in molecular dynamics and structural biology. Adapted from: ArianJamasb's molstar/VSCoding-Sequence.",
+  "version": "0.0.1",
+  "publisher": "mcardZH",
   "author": {
-    "name": "Arian Jamasb"
+    "name": "mcardZH"
   },
   "icon": "img/logo.png",
   "engines": {
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/a-r-j/vscoding-sequence.git"
+    "url": "https://github.com/mcardZH/VSCode-viewer"
   },
   "license": "MIT",
   "categories": [
@@ -22,6 +22,12 @@
     "Data Science"
   ],
   "keywords": [
+    "gromacs",
+    "molecular dynamics",
+    "simulation",
+    "trajectory",
+    "visualization",
+    "msv",
     "protein",
     "molecule",
     "biology",
@@ -37,12 +43,18 @@
     "xyz",
     "cif",
     "gro",
+    "xtc",
+    "trr",
     "macromolecule",
     "bioinformatics",
     "computational biology",
     "chemistry",
     "cheminformatics",
-    "computational chemistry"
+    "computational chemistry",
+    "分子模拟",
+    "分子动力学",
+    "轨迹",
+    "结构生物学"
   ],
   "activationEvents": [
     "onCommand:protein-viewer.start",
