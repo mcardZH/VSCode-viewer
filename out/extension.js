@@ -1,35 +1,35 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.activate = void 0;
+exports.activate = activate;
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 const node_fetch_1 = require("node-fetch");
 const vscode = require("vscode");
-const ProteinViewerPanel_1 = require("./panels/ProteinViewerPanel");
+const MolecularSimulationVisualizerPanel_1 = require("./panels/MolecularSimulationVisualizerPanel");
 const path = require('node:path');
 async function activate(context) {
-    const helloCommand = vscode.commands.registerCommand("protein-viewer.start", () => {
+    const helloCommand = vscode.commands.registerCommand("msv.start", () => {
         showInputBox().then((accession) => {
             console.log(accession);
-            ProteinViewerPanel_1.ProteinViewerPanel.render(context.extensionUri, accession);
+            MolecularSimulationVisualizerPanel_1.MolecularSimulationVisualizerPanel.render(context.extensionUri, accession);
         });
     });
-    const activateFromFiles = vscode.commands.registerCommand("protein-viewer.activateFromFiles", (file_uri, selectedFiles) => {
+    const activateFromFiles = vscode.commands.registerCommand("msv.activateFromFiles", (file_uri, selectedFiles) => {
         console.log(file_uri);
         console.log(selectedFiles);
-        ProteinViewerPanel_1.ProteinViewerPanel.renderFromFiles(context.extensionUri, selectedFiles);
+        MolecularSimulationVisualizerPanel_1.MolecularSimulationVisualizerPanel.renderFromFiles(context.extensionUri, selectedFiles);
     });
-    const activateFromFolder = vscode.commands.registerCommand("protein-viewer.activateFromFolder", (folder_uri) => {
+    const activateFromFolder = vscode.commands.registerCommand("msv.activateFromFolder", (folder_uri) => {
         vscode.workspace.findFiles(`${vscode.workspace.asRelativePath(folder_uri)}/*.pdb`).then((files_uri) => {
-            ProteinViewerPanel_1.ProteinViewerPanel.renderFromFiles(context.extensionUri, files_uri);
+            MolecularSimulationVisualizerPanel_1.MolecularSimulationVisualizerPanel.renderFromFiles(context.extensionUri, files_uri);
         });
     });
-    const ESMFold = vscode.commands.registerCommand("protein-viewer.ESMFold", () => {
+    const ESMFold = vscode.commands.registerCommand("msv.ESMFold", () => {
         showSequenceInputBox().then((sequence) => {
             const uri = getfold(sequence).then((pdb) => {
                 writeFoldToFile(pdb).then(async (file_uri) => {
                     console.log(file_uri);
-                    ProteinViewerPanel_1.ProteinViewerPanel.renderFromFiles(context.extensionUri, [vscode.Uri.file(file_uri)]);
+                    MolecularSimulationVisualizerPanel_1.MolecularSimulationVisualizerPanel.renderFromFiles(context.extensionUri, [vscode.Uri.file(file_uri)]);
                 });
             });
         });
@@ -40,7 +40,6 @@ async function activate(context) {
     context.subscriptions.push(activateFromFolder);
     context.subscriptions.push(ESMFold);
 }
-exports.activate = activate;
 // this method is called when your extension is deactivated
 // export function deactivate() {}
 async function showInputBox() {
@@ -53,7 +52,7 @@ async function showInputBox() {
 async function showSequenceInputBox() {
     const sequence = await vscode.window.showInputBox({
         value: '',
-        placeHolder: 'Enter a protein sequence',
+        placeHolder: 'Enter a protein sequence for ESMFold',
     });
     return sequence;
 }
