@@ -15,6 +15,7 @@
                 width: 100%;
                 height: 100%;
                 overflow: hidden;
+                padding: 0;
             }
             hr {
                 margin: 10px;
@@ -27,24 +28,40 @@
                 padding: 2px;
             }
             #app {
-                position: absolute;
-                left: 100px;
-                top: 100px;
-                width: 800px;
-                height: 600px;
+                position: relative;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100vh;
+                overflow: hidden;
+            }
+            
+            /* Ensure Molstar UI components fill the container */
+            #app > * {
+                width: 100%;
+                height: 100%;
+            }
+            
+            /* Make sure the canvas and viewer area are properly sized */
+            .msp-plugin, .msp-layout-main {
+                width: 100% !important;
+                height: 100% !important;
             }
         </style>
         <link rel="stylesheet" type="text/css" href="{{CSS_URI}}" />
     </head>
     <body>
         <div id="app"></div>
+        <!-- Load Molstar -->
         <script type="text/javascript" src="{{JS_URI}}"></script>
+        
+        <!-- Load our plugin (includes all dependencies) -->
         <script type="text/javascript" src="{{PLUGIN_URI}}"></script>
         <script type="text/javascript">
             // Parse URL configuration using the plugin utility
             var config = MolstarPlugin.parseUrlConfig();
             
-            // Create viewer using the createViewer helper function
+            // Create plugin UI using the built-in React UI approach
             MolstarPlugin.createViewer({
                 elementId: 'app',
                 layoutShowControls: !config.hideControls,
@@ -71,11 +88,21 @@
                 pdbDev: config.pdbDev,
                 emdb: config.emdb,
                 modelArchive: config.modelArchive,
-                loadCommand: `{{LOAD_COMMAND}}`
-            }).then(viewer => {
-                console.log('Molstar viewer created successfully', viewer);
-            }).catch(error => {
-                console.error('Error creating Molstar viewer:', error);
+                loadCommand: `{{LOAD_COMMAND}}`,
+                // Built-in React UI callback for additional customization
+                onBeforeUIRender: function(pluginContext) {
+                    console.log('Plugin UI context available for customization:', pluginContext);
+                    // You can customize the plugin here before UI renders
+                    return Promise.resolve();
+                }
+            }).then(function(pluginContext) {
+                console.log('Molstar plugin with built-in React UI created successfully:', pluginContext);
+                console.log('Available UI components:', pluginContext.spec.components);
+                
+                // Store plugin context globally for debugging/interaction
+                window.molstarPlugin = pluginContext;
+            }).catch(function(error) {
+                console.error('Error creating Molstar plugin with built-in UI:', error);
             });
         </script>
         <!-- __MOLSTAR_ANALYTICS__ -->

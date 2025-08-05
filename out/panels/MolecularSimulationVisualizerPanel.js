@@ -5,13 +5,13 @@ const vscode = require("vscode");
 const fs = require("fs");
 const path = require("path");
 class MolecularSimulationVisualizerPanel {
-    constructor(panel, extensionUri, accession, clickedFiles) {
+    constructor(panel, extensionUri, loadCommand, clickedFiles) {
         this._disposables = [];
         this._disposed = false;
         this._panel = panel;
         this._panel.onDidDispose(this.dispose, null, this._disposables);
-        if (accession != undefined) {
-            this._panel.webview.html = this._getWebviewContent(panel.webview, extensionUri, accession);
+        if (loadCommand != undefined) {
+            this._panel.webview.html = this._getWebviewContent(panel.webview, extensionUri, loadCommand);
         }
         ;
         if (clickedFiles != undefined) {
@@ -26,10 +26,18 @@ class MolecularSimulationVisualizerPanel {
             retainContextWhenHidden: true
         });
         if (accession?.length === 4) {
-            var loadCommand = `viewer.loadPdb('${accession}');`;
+            var loadCommand = `
+        plugin.builders.data.download({ url: 'https://www.ebi.ac.uk/pdbe/static/entry/${accession}_updated.cif', isBinary: false })
+          .then(data => plugin.builders.structure.parseTrajectory(data, 'mmcif'))
+          .then(trajectory => plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default'));
+      `;
         }
         else {
-            var loadCommand = `viewer.loadAlphaFoldDb('${accession}');`;
+            var loadCommand = `
+        plugin.builders.data.download({ url: 'https://alphafold.ebi.ac.uk/files/AF-${accession}-F1-model_v4.cif', isBinary: false })
+          .then(data => plugin.builders.structure.parseTrajectory(data, 'mmcif'))
+          .then(trajectory => plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default'));
+      `;
         }
         MolecularSimulationVisualizerPanel.currentPanel = new MolecularSimulationVisualizerPanel(panel, extensionUri, loadCommand, undefined);
     }
@@ -81,7 +89,7 @@ class MolecularSimulationVisualizerPanel {
         }
         return template;
     }
-    _getWebviewContent(webview, extensionUri, accession) {
+    _getWebviewContent(webview, extensionUri, loadCommand) {
         const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'molstar', 'build/viewer', 'molstar.css'));
         const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'molstar', 'build/viewer', 'molstar.js'));
         const pluginUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'mol-plugin', 'dist', 'index.js'));
@@ -89,7 +97,7 @@ class MolecularSimulationVisualizerPanel {
             'CSS_URI': cssUri.toString(),
             'JS_URI': jsUri.toString(),
             'PLUGIN_URI': pluginUri.toString(),
-            'LOAD_COMMAND': accession || ''
+            'LOAD_COMMAND': loadCommand || ''
         };
         return this._loadTemplate(extensionUri, 'webview-template.html', replacements);
     }
@@ -108,7 +116,11 @@ class MolecularSimulationVisualizerPanel {
                 extension = 'mmcif';
             }
             console.log(extension);
-            loadCommands.push(`viewer.loadStructureFromUrl('${pdbContent}', format='${extension}');`);
+            loadCommands.push(`
+        plugin.builders.data.download({ url: '${pdbContent}', isBinary: false })
+          .then(data => plugin.builders.structure.parseTrajectory(data, '${extension}'))
+          .then(trajectory => plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default'));
+      `);
         }
         const replacements = {
             'CSS_URI': cssUri.toString(),

@@ -1,14 +1,16 @@
 import React, { useEffect, useRef } from 'react';
-import * as molstar from 'molstar';
-import { Viewer } from 'molstar/lib/apps/viewer/app';
+import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
+import { PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginState } from 'molstar/lib/mol-plugin/state';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
+import { createViewer } from '../index';
 
 export interface MolstarViewerProps {
   id?: string;
   className?: string;
   style?: React.CSSProperties;
-  // Viewer configuration options
+  // UI Configuration
+  spec?: PluginUISpec;
   layoutShowControls?: boolean;
   viewportShowExpand?: boolean;
   collapseLeftPanel?: boolean;
@@ -34,14 +36,16 @@ export interface MolstarViewerProps {
   modelArchive?: string;
   loadCommand?: string;
   // Callbacks
-  onViewerReady?: (viewer: Viewer) => void;
+  onViewerReady?: (plugin: PluginUIContext) => void;
   onError?: (error: Error) => void;
+  onBeforeUIRender?: (ctx: PluginUIContext) => (Promise<void> | void);
 }
 
 export const MolstarViewer: React.FC<MolstarViewerProps> = ({
   id = 'molstar-viewer',
   className,
   style,
+  spec,
   layoutShowControls = true,
   viewportShowExpand = false,
   collapseLeftPanel = false,
@@ -66,91 +70,56 @@ export const MolstarViewer: React.FC<MolstarViewerProps> = ({
   modelArchive,
   loadCommand,
   onViewerReady,
-  onError
+  onError,
+  onBeforeUIRender
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<Viewer | null>(null);
+  const pluginRef = useRef<PluginUIContext | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     const initViewer = async () => {
       try {
-        // Set debug mode if enabled
-        if (debugMode) {
-          molstar.setDebugMode(debugMode, debugMode);
-        }
-
-        // Determine volume streaming server
-        const defaultVolumeStreamingServer = volumeStreamingServer || 
-          ((pdbProvider || 'pdbe') === 'rcsb' 
-            ? 'https://maps.rcsb.org'
-            : 'https://www.ebi.ac.uk/pdbe/densities');
-
-        // Create viewer with configuration
-        const viewer = await molstar.Viewer.create(id, {
+        // Create plugin using built-in React UI
+        const plugin = await createViewer({
+          elementId: id,
+          spec,
           layoutShowControls,
           viewportShowExpand,
           collapseLeftPanel,
-          pdbProvider: pdbProvider as 'pdbe' | 'rcsb' | 'pdbj' | undefined,
-          emdbProvider: emdbProvider as any,
-          volumeStreamingServer: defaultVolumeStreamingServer,
+          pdbProvider,
+          emdbProvider,
+          volumeStreamingServer,
           pixelScale,
           pickScale,
-          pickPadding: isNaN(pickPadding) ? 1 : pickPadding,
-          enableWboit: enableWboit ? true : undefined,
+          pickPadding,
+          enableWboit,
           preferWebgl1,
+          debugMode,
+          snapshotId,
+          snapshotUrl,
+          snapshotUrlType,
+          structureUrl,
+          structureUrlFormat,
+          structureUrlIsBinary,
+          pdb,
+          pdbDev,
+          emdb,
+          modelArchive,
+          loadCommand,
+          onBeforeUIRender
         });
 
-        viewerRef.current = viewer as unknown as Viewer;
+        pluginRef.current = plugin;
 
-        // Load content based on provided options
-        if (snapshotId) {
-          await viewer.setRemoteSnapshot(snapshotId);
-        }
-
-        if (snapshotUrl && snapshotUrlType) {
-          await viewer.loadSnapshotFromUrl(snapshotUrl, snapshotUrlType);
-        }
-
-        if (structureUrl) {
-          await viewer.loadStructureFromUrl(structureUrl, structureUrlFormat, structureUrlIsBinary);
-        }
-
-        if (pdb) {
-          await viewer.loadPdb(pdb);
-        }
-
-        if (pdbDev) {
-          await viewer.loadPdbDev(pdbDev);
-        }
-
-        if (emdb) {
-          await viewer.loadEmdb(emdb);
-        }
-
-        if (modelArchive) {
-          await viewer.loadModelArchive(modelArchive);
-        }
-
-        // Execute custom load command if provided
-        if (loadCommand) {
-          try {
-            // Safely evaluate the load command
-            const func = new Function('viewer', loadCommand);
-            func(viewer);
-          } catch (cmdError) {
-            console.warn('Error executing load command:', cmdError);
-          }
-        }
-
-        // Notify that viewer is ready
+        // Notify that plugin is ready
         if (onViewerReady) {
-          onViewerReady(viewer as unknown as Viewer);
+          onViewerReady(plugin);
         }
 
       } catch (error) {
-        console.error('Error initializing Molstar viewer:', error);
+        console.error('Error initializing Molstar plugin:', error);
         if (onError) {
           onError(error as Error);
         }
@@ -161,22 +130,22 @@ export const MolstarViewer: React.FC<MolstarViewerProps> = ({
 
     // Cleanup function
     return () => {
-      if (viewerRef.current) {
+      if (pluginRef.current) {
         try {
-          viewerRef.current.dispose?.();
+          pluginRef.current.dispose?.();
         } catch (error) {
-          console.warn('Error disposing viewer:', error);
+          console.warn('Error disposing plugin:', error);
         }
-        viewerRef.current = null;
+        pluginRef.current = null;
       }
     };
   }, [
-    id, layoutShowControls, viewportShowExpand, collapseLeftPanel,
+    id, spec, layoutShowControls, viewportShowExpand, collapseLeftPanel,
     pdbProvider, emdbProvider, volumeStreamingServer, pixelScale,
     pickScale, pickPadding, enableWboit, preferWebgl1, debugMode,
     snapshotId, snapshotUrl, snapshotUrlType, structureUrl,
     structureUrlFormat, structureUrlIsBinary, pdb, pdbDev,
-    emdb, modelArchive, loadCommand
+    emdb, modelArchive, loadCommand, onBeforeUIRender
   ]);
 
   const defaultStyle: React.CSSProperties = {

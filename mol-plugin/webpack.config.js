@@ -9,16 +9,14 @@ module.exports = (env, argv) => {
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: 'index.js',
-      library: 'MolstarPlugin',
-      libraryTarget: 'umd',
+      library: {
+        name: 'MolstarPlugin',
+        type: 'umd'
+      },
       globalObject: 'this'
     },
     resolve: {
-      extensions: ['.ts', '.tsx', '.js', '.jsx'],
-      alias: {
-        'react/jsx-runtime': path.resolve(__dirname, 'src/jsx-runtime.ts'),
-        'react$': path.resolve(__dirname, 'src/react-shim.ts')
-      }
+      extensions: ['.ts', '.tsx', '.js', '.jsx']
     },
     externals: {
       'molstar': 'molstar'

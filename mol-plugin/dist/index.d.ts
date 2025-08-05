@@ -1,5 +1,6 @@
 export * as molstar from 'molstar';
-import { Viewer } from 'molstar/lib/apps/viewer/app';
+import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
+import { PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginState } from 'molstar/lib/mol-plugin/state';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 export { MolstarViewer, type MolstarViewerProps } from './components/MolstarViewer';
@@ -30,6 +31,7 @@ export interface ViewerConfig {
 export declare function parseUrlConfig(): ViewerConfig;
 export interface CreateViewerOptions {
     elementId: string;
+    spec?: PluginUISpec;
     layoutShowControls?: boolean;
     viewportShowExpand?: boolean;
     collapseLeftPanel?: boolean;
@@ -53,5 +55,6 @@ export interface CreateViewerOptions {
     emdb?: string;
     modelArchive?: string;
     loadCommand?: string;
+    onBeforeUIRender?: (ctx: PluginUIContext) => (Promise<void> | void);
 }
-export declare function createViewer(options: CreateViewerOptions): Promise<Viewer>;
+export declare function createViewer(options: CreateViewerOptions): Promise<PluginUIContext>;

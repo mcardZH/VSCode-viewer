@@ -1,11 +1,13 @@
 import React from 'react';
-import { Viewer } from 'molstar/lib/apps/viewer/app';
+import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
+import { PluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginState } from 'molstar/lib/mol-plugin/state';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 export interface MolstarViewerProps {
     id?: string;
     className?: string;
     style?: React.CSSProperties;
+    spec?: PluginUISpec;
     layoutShowControls?: boolean;
     viewportShowExpand?: boolean;
     collapseLeftPanel?: boolean;
@@ -29,8 +31,9 @@ export interface MolstarViewerProps {
     emdb?: string;
     modelArchive?: string;
     loadCommand?: string;
-    onViewerReady?: (viewer: Viewer) => void;
+    onViewerReady?: (plugin: PluginUIContext) => void;
     onError?: (error: Error) => void;
+    onBeforeUIRender?: (ctx: PluginUIContext) => (Promise<void> | void);
 }
 export declare const MolstarViewer: React.FC<MolstarViewerProps>;
 export default MolstarViewer;

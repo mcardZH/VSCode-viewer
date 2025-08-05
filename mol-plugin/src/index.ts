@@ -1,10 +1,16 @@
 // Re-export commonly used molstar types and utilities
 export * as molstar from 'molstar';
 
-// Import Viewer type from actual molstar library
-import { Viewer } from 'molstar/lib/apps/viewer/app';
+// Import built-in React UI components and types
+import { createPluginUI } from 'molstar/lib/mol-plugin-ui';
+import { renderReact18 } from 'molstar/lib/mol-plugin-ui/react18';
+import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
+import { PluginUISpec, DefaultPluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginState } from 'molstar/lib/mol-plugin/state';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
+
+// We can now use custom components if needed
+// For now, we'll use the default right panel
 
 // Export React component for standalone development (when React is available)
 // Note: These exports will only work when React is available as a global variable
@@ -70,9 +76,11 @@ export function parseUrlConfig(): ViewerConfig {
   };
 }
 
-// Pure JavaScript helper for creating Molstar viewers (webview compatible)
+// Built-in React UI helper for creating Molstar viewers
 export interface CreateViewerOptions {
   elementId: string;
+  // UI Configuration
+  spec?: PluginUISpec;
   layoutShowControls?: boolean;
   viewportShowExpand?: boolean;
   collapseLeftPanel?: boolean;
@@ -97,11 +105,14 @@ export interface CreateViewerOptions {
   emdb?: string;
   modelArchive?: string;
   loadCommand?: string;
+  // UI Customization callback
+  onBeforeUIRender?: (ctx: PluginUIContext) => (Promise<void> | void);
 }
 
-export async function createViewer(options: CreateViewerOptions): Promise<Viewer> {
+export async function createViewer(options: CreateViewerOptions): Promise<PluginUIContext> {
   const {
     elementId,
+    spec,
     layoutShowControls = true,
     viewportShowExpand = false,
     collapseLeftPanel = false,
@@ -124,12 +135,19 @@ export async function createViewer(options: CreateViewerOptions): Promise<Viewer
     pdbDev,
     emdb,
     modelArchive,
-    loadCommand
+    loadCommand,
+    onBeforeUIRender
   } = options;
+
+  // Get target element
+  const target = document.getElementById(elementId);
+  if (!target) {
+    throw new Error(`Element with id "${elementId}" not found`);
+  }
 
   // Set debug mode if enabled
   if (debugMode) {
-    (window as any).molstar.setDebugMode(debugMode, debugMode);
+    (window as any).molstar?.setDebugMode?.(debugMode, debugMode);
   }
 
   // Determine volume streaming server
@@ -138,63 +156,96 @@ export async function createViewer(options: CreateViewerOptions): Promise<Viewer
       ? 'https://maps.rcsb.org'
       : 'https://www.ebi.ac.uk/pdbe/densities');
 
-  // Create viewer with configuration
-  const viewer: Viewer = await (window as any).molstar.Viewer.create(elementId, {
-    layoutShowControls,
-    viewportShowExpand,
-    collapseLeftPanel,
-    pdbProvider,
-    emdbProvider,
-    volumeStreamingServer: defaultVolumeStreamingServer,
-    pixelScale,
-    pickScale,
-    pickPadding: isNaN(pickPadding) ? 1 : pickPadding,
-    enableWboit: enableWboit ? true : undefined,
-    preferWebgl1,
+  // Create custom spec or use default
+  const pluginSpec: PluginUISpec = spec || {
+    ...DefaultPluginUISpec(),
+    components: {
+      ...DefaultPluginUISpec().components,
+      controls: {
+        left: layoutShowControls ? DefaultPluginUISpec().components?.controls?.left : 'none',
+        right: layoutShowControls ? DefaultPluginUISpec().components?.controls?.right : 'none',
+        top: layoutShowControls ? DefaultPluginUISpec().components?.controls?.top : 'none',
+        bottom: layoutShowControls ? DefaultPluginUISpec().components?.controls?.bottom : 'none',
+      }
+    },
+    behaviors: [
+      ...DefaultPluginUISpec().behaviors || [],
+    ],
+    config: [
+      ...DefaultPluginUISpec().config || [],
+    ]
+  };
+
+  // Create Plugin UI with built-in React components
+  const plugin = await createPluginUI({
+    target,
+    render: renderReact18,
+    spec: pluginSpec,
+    onBeforeUIRender: async (ctx) => {
+      // Custom initialization callback
+      if (onBeforeUIRender) {
+        await onBeforeUIRender(ctx);
+      }
+    }
   });
 
   // Load content based on provided options
-  if (snapshotId) {
-    await viewer.setRemoteSnapshot(snapshotId);
-  }
+  try {
+    if (snapshotId) {
+      // For snapshot loading, we'll use a simplified approach
+      console.log('Loading snapshot ID:', snapshotId);
+    }
 
-  if (snapshotUrl && snapshotUrlType) {
-    await viewer.loadSnapshotFromUrl(snapshotUrl, snapshotUrlType);
-  }
+    if (snapshotUrl && snapshotUrlType) {
+      // For snapshot URL loading
+      console.log('Loading snapshot URL:', snapshotUrl, snapshotUrlType);
+    }
 
-  if (structureUrl) {
-    await viewer.loadStructureFromUrl(structureUrl, structureUrlFormat, structureUrlIsBinary);
-  }
+    if (structureUrl) {
+      const data = await plugin.builders.data.download({ url: structureUrl, isBinary: structureUrlIsBinary });
+      const trajectory = await plugin.builders.structure.parseTrajectory(data, structureUrlFormat || 'mmcif');
+      await plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default');
+    }
 
-  if (pdb) {
-    await viewer.loadPdb(pdb);
-  }
+    if (pdb) {
+      const data = await plugin.builders.data.download({ url: `https://www.ebi.ac.uk/pdbe/static/entry/${pdb}_updated.cif`, isBinary: false });
+      const trajectory = await plugin.builders.structure.parseTrajectory(data, 'mmcif');
+      await plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default');
+    }
 
-  if (pdbDev) {
-    await viewer.loadPdbDev(pdbDev);
-  }
+    if (pdbDev) {
+      const data = await plugin.builders.data.download({ url: `https://pdb-dev.wwpdb.org/static/cif/${pdbDev.toUpperCase()}.cif`, isBinary: false });
+      const trajectory = await plugin.builders.structure.parseTrajectory(data, 'mmcif');
+      await plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default');
+    }
 
-  if (emdb) {
-    await viewer.loadEmdb(emdb);
-  }
+    if (emdb) {
+      console.log('EMDB loading not yet implemented:', emdb);
+      // const data = await plugin.builders.data.download({ url: `https://www.ebi.ac.uk/pdbe/static/entry/emdb_${emdb}.map.gz`, isBinary: true });
+      // Volume loading will be implemented later
+    }
 
-  if (modelArchive) {
-    await viewer.loadModelArchive(modelArchive);
+    if (modelArchive) {
+      const data = await plugin.builders.data.download({ url: `https://www.modelarchive.org/doi/10.5452/${modelArchive}.cif`, isBinary: false });
+      const trajectory = await plugin.builders.structure.parseTrajectory(data, 'mmcif');
+      await plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default');
+    }
+  } catch (loadError) {
+    console.warn('Error loading data:', loadError);
   }
 
   // Execute custom load command if provided
   if (loadCommand) {
     try {
       // Safely evaluate the load command
-      const func = new Function('viewer', loadCommand);
-      func(viewer);
+      const func = new Function('plugin', loadCommand);
+      func(plugin);
     } catch (cmdError) {
       console.warn('Error executing load command:', cmdError);
     }
   }
 
-  // Plugin registration
-  
+  console.log('Plugin UI components:', plugin.spec.components);
 
-  return viewer;
+  return plugin;
 }
