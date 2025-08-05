@@ -180,7 +180,15 @@ export async function createViewer(options: CreateViewerOptions): Promise<Plugin
   const plugin = await createPluginUI({
     target,
     render: renderReact18,
-    spec: pluginSpec,
+    spec: {
+        ...pluginSpec,
+        layout: {
+            initial: {
+                isExpanded: true,
+                showControls: true
+            }
+        }
+    },
     onBeforeUIRender: async (ctx) => {
       // Custom initialization callback
       if (onBeforeUIRender) {
