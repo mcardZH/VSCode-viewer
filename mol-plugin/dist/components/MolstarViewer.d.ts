@@ -1,4 +1,7 @@
 import React from 'react';
+import { Viewer } from 'molstar/lib/apps/viewer/app';
+import { PluginState } from 'molstar/lib/mol-plugin/state';
+import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 export interface MolstarViewerProps {
     id?: string;
     className?: string;
@@ -17,16 +20,16 @@ export interface MolstarViewerProps {
     debugMode?: boolean;
     snapshotId?: string;
     snapshotUrl?: string;
-    snapshotUrlType?: string;
+    snapshotUrlType?: PluginState.SnapshotType;
     structureUrl?: string;
-    structureUrlFormat?: string;
+    structureUrlFormat?: BuiltInTrajectoryFormat;
     structureUrlIsBinary?: boolean;
     pdb?: string;
     pdbDev?: string;
     emdb?: string;
     modelArchive?: string;
     loadCommand?: string;
-    onViewerReady?: (viewer: any) => void;
+    onViewerReady?: (viewer: Viewer) => void;
     onError?: (error: Error) => void;
 }
 export declare const MolstarViewer: React.FC<MolstarViewerProps>;

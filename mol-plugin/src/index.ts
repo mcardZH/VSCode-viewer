@@ -1,6 +1,11 @@
 // Re-export commonly used molstar types and utilities
 export * as molstar from 'molstar';
 
+// Import Viewer type from actual molstar library
+import { Viewer } from 'molstar/lib/apps/viewer/app';
+import { PluginState } from 'molstar/lib/mol-plugin/state';
+import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
+
 // Export React component for standalone development (when React is available)
 // Note: These exports will only work when React is available as a global variable
 export { MolstarViewer, type MolstarViewerProps } from './components/MolstarViewer';
@@ -26,9 +31,9 @@ export interface ViewerConfig {
   preferWebgl1?: boolean;
   snapshotId?: string;
   snapshotUrl?: string;
-  snapshotUrlType?: string;
+  snapshotUrlType?: PluginState.SnapshotType;
   structureUrl?: string;
-  structureUrlFormat?: string;
+  structureUrlFormat?: BuiltInTrajectoryFormat;
   structureUrlIsBinary?: boolean;
   pdb?: string;
   pdbDev?: string;
@@ -54,9 +59,9 @@ export function parseUrlConfig(): ViewerConfig {
     preferWebgl1: getParam('prefer-webgl1', '[^&]+').trim() === '1' || undefined,
     snapshotId: getParam('snapshot-id', '[^&]+').trim() || undefined,
     snapshotUrl: getParam('snapshot-url', '[^&]+').trim() || undefined,
-    snapshotUrlType: getParam('snapshot-url-type', '[^&]+').toLowerCase().trim() || undefined,
+    snapshotUrlType: (getParam('snapshot-url-type', '[^&]+').toLowerCase().trim() as PluginState.SnapshotType) || undefined,
     structureUrl: getParam('structure-url', '[^&]+').trim() || undefined,
-    structureUrlFormat: getParam('structure-url-format', '[a-z]+').toLowerCase().trim() || undefined,
+    structureUrlFormat: (getParam('structure-url-format', '[a-z]+').toLowerCase().trim() as BuiltInTrajectoryFormat) || undefined,
     structureUrlIsBinary: getParam('structure-url-is-binary', '[^&]+').trim() === '1',
     pdb: getParam('pdb', '[^&]+').trim() || undefined,
     pdbDev: getParam('pdb-dev', '[^&]+').trim() || undefined,
@@ -83,9 +88,9 @@ export interface CreateViewerOptions {
   // Loading options
   snapshotId?: string;
   snapshotUrl?: string;
-  snapshotUrlType?: string;
+  snapshotUrlType?: PluginState.SnapshotType;
   structureUrl?: string;
-  structureUrlFormat?: string;
+  structureUrlFormat?: BuiltInTrajectoryFormat;
   structureUrlIsBinary?: boolean;
   pdb?: string;
   pdbDev?: string;
@@ -94,7 +99,7 @@ export interface CreateViewerOptions {
   loadCommand?: string;
 }
 
-export async function createViewer(options: CreateViewerOptions): Promise<any> {
+export async function createViewer(options: CreateViewerOptions): Promise<Viewer> {
   const {
     elementId,
     layoutShowControls = true,
@@ -111,7 +116,7 @@ export async function createViewer(options: CreateViewerOptions): Promise<any> {
     debugMode = false,
     snapshotId,
     snapshotUrl,
-    snapshotUrlType = 'molj',
+    snapshotUrlType = 'molj' as PluginState.SnapshotType,
     structureUrl,
     structureUrlFormat,
     structureUrlIsBinary = false,
@@ -134,7 +139,7 @@ export async function createViewer(options: CreateViewerOptions): Promise<any> {
       : 'https://www.ebi.ac.uk/pdbe/densities');
 
   // Create viewer with configuration
-  const viewer = await (window as any).molstar.Viewer.create(elementId, {
+  const viewer: Viewer = await (window as any).molstar.Viewer.create(elementId, {
     layoutShowControls,
     viewportShowExpand,
     collapseLeftPanel,
@@ -187,6 +192,9 @@ export async function createViewer(options: CreateViewerOptions): Promise<any> {
       console.warn('Error executing load command:', cmdError);
     }
   }
+
+  // Plugin registration
+  
 
   return viewer;
 }

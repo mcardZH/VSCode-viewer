@@ -1,4 +1,7 @@
 export * as molstar from 'molstar';
+import { Viewer } from 'molstar/lib/apps/viewer/app';
+import { PluginState } from 'molstar/lib/mol-plugin/state';
+import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 export { MolstarViewer, type MolstarViewerProps } from './components/MolstarViewer';
 export declare function getParam(name: string, regex: string): string;
 export interface ViewerConfig {
@@ -15,9 +18,9 @@ export interface ViewerConfig {
     preferWebgl1?: boolean;
     snapshotId?: string;
     snapshotUrl?: string;
-    snapshotUrlType?: string;
+    snapshotUrlType?: PluginState.SnapshotType;
     structureUrl?: string;
-    structureUrlFormat?: string;
+    structureUrlFormat?: BuiltInTrajectoryFormat;
     structureUrlIsBinary?: boolean;
     pdb?: string;
     pdbDev?: string;
@@ -41,9 +44,9 @@ export interface CreateViewerOptions {
     debugMode?: boolean;
     snapshotId?: string;
     snapshotUrl?: string;
-    snapshotUrlType?: string;
+    snapshotUrlType?: PluginState.SnapshotType;
     structureUrl?: string;
-    structureUrlFormat?: string;
+    structureUrlFormat?: BuiltInTrajectoryFormat;
     structureUrlIsBinary?: boolean;
     pdb?: string;
     pdbDev?: string;
@@ -51,4 +54,4 @@ export interface CreateViewerOptions {
     modelArchive?: string;
     loadCommand?: string;
 }
-export declare function createViewer(options: CreateViewerOptions): Promise<any>;
+export declare function createViewer(options: CreateViewerOptions): Promise<Viewer>;

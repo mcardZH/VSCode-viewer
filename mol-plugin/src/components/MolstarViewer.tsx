@@ -1,5 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import * as molstar from 'molstar';
+import { Viewer } from 'molstar/lib/apps/viewer/app';
+import { PluginState } from 'molstar/lib/mol-plugin/state';
+import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
 
 export interface MolstarViewerProps {
   id?: string;
@@ -21,9 +24,9 @@ export interface MolstarViewerProps {
   // Loading options
   snapshotId?: string;
   snapshotUrl?: string;
-  snapshotUrlType?: string;
+  snapshotUrlType?: PluginState.SnapshotType;
   structureUrl?: string;
-  structureUrlFormat?: string;
+  structureUrlFormat?: BuiltInTrajectoryFormat;
   structureUrlIsBinary?: boolean;
   pdb?: string;
   pdbDev?: string;
@@ -31,7 +34,7 @@ export interface MolstarViewerProps {
   modelArchive?: string;
   loadCommand?: string;
   // Callbacks
-  onViewerReady?: (viewer: any) => void;
+  onViewerReady?: (viewer: Viewer) => void;
   onError?: (error: Error) => void;
 }
 
@@ -66,7 +69,7 @@ export const MolstarViewer: React.FC<MolstarViewerProps> = ({
   onError
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<any>(null);
+  const viewerRef = useRef<Viewer | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -89,8 +92,8 @@ export const MolstarViewer: React.FC<MolstarViewerProps> = ({
           layoutShowControls,
           viewportShowExpand,
           collapseLeftPanel,
-          pdbProvider,
-          emdbProvider,
+          pdbProvider: pdbProvider as 'pdbe' | 'rcsb' | 'pdbj' | undefined,
+          emdbProvider: emdbProvider as any,
           volumeStreamingServer: defaultVolumeStreamingServer,
           pixelScale,
           pickScale,
@@ -99,7 +102,7 @@ export const MolstarViewer: React.FC<MolstarViewerProps> = ({
           preferWebgl1,
         });
 
-        viewerRef.current = viewer;
+        viewerRef.current = viewer as unknown as Viewer;
 
         // Load content based on provided options
         if (snapshotId) {
@@ -143,7 +146,7 @@ export const MolstarViewer: React.FC<MolstarViewerProps> = ({
 
         // Notify that viewer is ready
         if (onViewerReady) {
-          onViewerReady(viewer);
+          onViewerReady(viewer as unknown as Viewer);
         }
 
       } catch (error) {
