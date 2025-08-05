@@ -1,0 +1,54 @@
+export * as molstar from 'molstar';
+export { MolstarViewer, type MolstarViewerProps } from './components/MolstarViewer';
+export declare function getParam(name: string, regex: string): string;
+export interface ViewerConfig {
+    debugMode?: boolean;
+    hideControls?: boolean;
+    collapseLeftPanel?: boolean;
+    pdbProvider?: string;
+    emdbProvider?: string;
+    mapProvider?: string;
+    pixelScale?: number;
+    pickScale?: number;
+    pickPadding?: number;
+    disableWboit?: boolean;
+    preferWebgl1?: boolean;
+    snapshotId?: string;
+    snapshotUrl?: string;
+    snapshotUrlType?: string;
+    structureUrl?: string;
+    structureUrlFormat?: string;
+    structureUrlIsBinary?: boolean;
+    pdb?: string;
+    pdbDev?: string;
+    emdb?: string;
+    modelArchive?: string;
+}
+export declare function parseUrlConfig(): ViewerConfig;
+export interface CreateViewerOptions {
+    elementId: string;
+    layoutShowControls?: boolean;
+    viewportShowExpand?: boolean;
+    collapseLeftPanel?: boolean;
+    pdbProvider?: string;
+    emdbProvider?: string;
+    volumeStreamingServer?: string;
+    pixelScale?: number;
+    pickScale?: number;
+    pickPadding?: number;
+    enableWboit?: boolean;
+    preferWebgl1?: boolean;
+    debugMode?: boolean;
+    snapshotId?: string;
+    snapshotUrl?: string;
+    snapshotUrlType?: string;
+    structureUrl?: string;
+    structureUrlFormat?: string;
+    structureUrlIsBinary?: boolean;
+    pdb?: string;
+    pdbDev?: string;
+    emdb?: string;
+    modelArchive?: string;
+    loadCommand?: string;
+}
+export declare function createViewer(options: CreateViewerOptions): Promise<any>;

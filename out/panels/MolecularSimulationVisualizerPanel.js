@@ -7,6 +7,7 @@ const path = require("path");
 class MolecularSimulationVisualizerPanel {
     constructor(panel, extensionUri, accession, clickedFiles) {
         this._disposables = [];
+        this._disposed = false;
         this._panel = panel;
         this._panel.onDidDispose(this.dispose, null, this._disposables);
         if (accession != undefined) {
@@ -42,12 +43,31 @@ class MolecularSimulationVisualizerPanel {
         MolecularSimulationVisualizerPanel.currentPanel = new MolecularSimulationVisualizerPanel(panel, extensionUri, undefined, clickedFiles);
     }
     dispose() {
+        // 防止重复销毁
+        if (this._disposed) {
+            return;
+        }
+        this._disposed = true;
         MolecularSimulationVisualizerPanel.currentPanel = undefined;
-        this._panel.dispose();
+        // 只有在 panel 存在且未被销毁时才调用 dispose
+        if (this._panel) {
+            try {
+                this._panel.dispose();
+            }
+            catch (error) {
+                console.warn('Error disposing panel:', error);
+            }
+        }
+        // 清理所有可销毁的资源
         while (this._disposables.length) {
             const disposable = this._disposables.pop();
             if (disposable) {
-                disposable.dispose();
+                try {
+                    disposable.dispose();
+                }
+                catch (error) {
+                    console.warn('Error disposing resource:', error);
+                }
             }
         }
     }
@@ -64,9 +84,11 @@ class MolecularSimulationVisualizerPanel {
     _getWebviewContent(webview, extensionUri, accession) {
         const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'molstar', 'build/viewer', 'molstar.css'));
         const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'molstar', 'build/viewer', 'molstar.js'));
+        const pluginUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'mol-plugin', 'dist', 'index.js'));
         const replacements = {
             'CSS_URI': cssUri.toString(),
             'JS_URI': jsUri.toString(),
+            'PLUGIN_URI': pluginUri.toString(),
             'LOAD_COMMAND': accession || ''
         };
         return this._loadTemplate(extensionUri, 'webview-template.html', replacements);
@@ -74,6 +96,7 @@ class MolecularSimulationVisualizerPanel {
     _getWebviewContentForFiles(webview, extensionUri, clickedFiles) {
         const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'molstar', 'build/viewer', 'molstar.css'));
         const jsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', 'molstar', 'build/viewer', 'molstar.js'));
+        const pluginUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'mol-plugin', 'dist', 'index.js'));
         const pdbContents = clickedFiles.map((clickedFile) => webview.asWebviewUri(clickedFile));
         const extensions = clickedFiles.map((clickedFile) => clickedFile.path.split('.').pop()?.toLocaleLowerCase());
         let loadCommands = [];
@@ -90,6 +113,7 @@ class MolecularSimulationVisualizerPanel {
         const replacements = {
             'CSS_URI': cssUri.toString(),
             'JS_URI': jsUri.toString(),
+            'PLUGIN_URI': pluginUri.toString(),
             'LOAD_COMMANDS': loadCommands.join("")
         };
         return this._loadTemplate(extensionUri, 'webview-files-template.html', replacements);

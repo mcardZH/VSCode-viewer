@@ -98,10 +98,12 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run build:plugin && npm run compile",
     "compile": "tsc -p ./",
+    "build:plugin": "cd mol-plugin && npm install && npm run build",
+    "build:plugin:dev": "cd mol-plugin && npm install && npm run dev",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
+    "pretest": "npm run build:plugin && npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js"
   },

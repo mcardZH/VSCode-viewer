@@ -1,0 +1,33 @@
+import React from 'react';
+export interface MolstarViewerProps {
+    id?: string;
+    className?: string;
+    style?: React.CSSProperties;
+    layoutShowControls?: boolean;
+    viewportShowExpand?: boolean;
+    collapseLeftPanel?: boolean;
+    pdbProvider?: string;
+    emdbProvider?: string;
+    volumeStreamingServer?: string;
+    pixelScale?: number;
+    pickScale?: number;
+    pickPadding?: number;
+    enableWboit?: boolean;
+    preferWebgl1?: boolean;
+    debugMode?: boolean;
+    snapshotId?: string;
+    snapshotUrl?: string;
+    snapshotUrlType?: string;
+    structureUrl?: string;
+    structureUrlFormat?: string;
+    structureUrlIsBinary?: boolean;
+    pdb?: string;
+    pdbDev?: string;
+    emdb?: string;
+    modelArchive?: string;
+    loadCommand?: string;
+    onViewerReady?: (viewer: any) => void;
+    onError?: (error: Error) => void;
+}
+export declare const MolstarViewer: React.FC<MolstarViewerProps>;
+export default MolstarViewer;

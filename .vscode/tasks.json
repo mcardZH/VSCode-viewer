@@ -2,6 +2,22 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "build-all",
+      "type": "npm",
+      "script": "vscode:prepublish",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": ["$tsc"],
+      "detail": "Build mol-plugin and compile extension"
+    },
+    {
       "type": "npm",
       "script": "compile",
       "group": "build",
@@ -10,7 +26,33 @@
         "showReuseMessage": true,
         "clear": false
       },
-      "problemMatcher": "$tsc"
+      "problemMatcher": "$tsc",
+      "detail": "Compile extension only (without plugin build)"
+    },
+    {
+      "label": "build-plugin",
+      "type": "npm",
+      "script": "build:plugin",
+      "group": "build",
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "detail": "Build mol-plugin only"
+    },
+    {
+      "label": "watch-plugin",
+      "type": "npm",
+      "script": "build:plugin:dev",
+      "group": "build",
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "isBackground": true,
+      "detail": "Watch and build mol-plugin in development mode"
     },
     {
       "type": "npm",
@@ -22,7 +64,8 @@
         "clear": false
       },
       "isBackground": true,
-      "problemMatcher": "$tsc-watch"
+      "problemMatcher": "$tsc-watch",
+      "detail": "Watch and compile extension"
     }
   ]
 }
