@@ -198,6 +198,24 @@ export async function createViewer(options: CreateViewerOptions): Promise<Plugin
     }
   });
 
+  // Execute loadCommand if provided
+  if (loadCommand) {
+    try {
+      // Give the plugin a moment to fully initialize
+      setTimeout(() => {
+        try {
+          // Create a function that executes the loadCommand with plugin context
+          const executeCommand = new Function('plugin', loadCommand);
+          executeCommand(plugin);
+        } catch (error) {
+          console.error('Error executing loadCommand:', error);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error setting up loadCommand execution:', error);
+    }
+  }
+
   return plugin;
 }
 
