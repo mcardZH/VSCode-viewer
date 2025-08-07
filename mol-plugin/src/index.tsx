@@ -8,6 +8,8 @@ import { PluginUIContext } from 'molstar/lib/mol-plugin-ui/context';
 import { PluginUISpec, DefaultPluginUISpec } from 'molstar/lib/mol-plugin-ui/spec';
 import { PluginState } from 'molstar/lib/mol-plugin/state';
 import { BuiltInTrajectoryFormat } from 'molstar/lib/mol-plugin-state/formats/trajectory';
+import { PluginUIComponent } from 'molstar/lib/mol-plugin-ui/base';
+import { DefaultStructureTools } from 'molstar/lib/mol-plugin-ui/controls';
 
 // We can now use custom components if needed
 // For now, we'll use the default right panel
@@ -150,12 +152,6 @@ export async function createViewer(options: CreateViewerOptions): Promise<Plugin
     (window as any).molstar?.setDebugMode?.(debugMode, debugMode);
   }
 
-  // Determine volume streaming server
-  const defaultVolumeStreamingServer = volumeStreamingServer || 
-    ((pdbProvider || 'pdbe') === 'rcsb' 
-      ? 'https://maps.rcsb.org'
-      : 'https://www.ebi.ac.uk/pdbe/densities');
-
   // Create custom spec or use default
   const pluginSpec: PluginUISpec = spec || {
     ...DefaultPluginUISpec(),
@@ -181,13 +177,18 @@ export async function createViewer(options: CreateViewerOptions): Promise<Plugin
     target,
     render: renderReact18,
     spec: {
-        ...pluginSpec,
-        layout: {
-            initial: {
-                isExpanded: true,
-                showControls: true
-            }
+      ...pluginSpec,
+      layout: {
+        initial: {
+          isExpanded: true,
+          showControls: true
         }
+      },
+      components: {
+        controls: {
+          right: EnhancedStructureTools,
+        }
+      }
     },
     onBeforeUIRender: async (ctx) => {
       // Custom initialization callback
@@ -197,63 +198,28 @@ export async function createViewer(options: CreateViewerOptions): Promise<Plugin
     }
   });
 
-  // Load content based on provided options
-  try {
-    if (snapshotId) {
-      // For snapshot loading, we'll use a simplified approach
-      console.log('Loading snapshot ID:', snapshotId);
-    }
-
-    if (snapshotUrl && snapshotUrlType) {
-      // For snapshot URL loading
-      console.log('Loading snapshot URL:', snapshotUrl, snapshotUrlType);
-    }
-
-    if (structureUrl) {
-      const data = await plugin.builders.data.download({ url: structureUrl, isBinary: structureUrlIsBinary });
-      const trajectory = await plugin.builders.structure.parseTrajectory(data, structureUrlFormat || 'mmcif');
-      await plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default');
-    }
-
-    if (pdb) {
-      const data = await plugin.builders.data.download({ url: `https://www.ebi.ac.uk/pdbe/static/entry/${pdb}_updated.cif`, isBinary: false });
-      const trajectory = await plugin.builders.structure.parseTrajectory(data, 'mmcif');
-      await plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default');
-    }
-
-    if (pdbDev) {
-      const data = await plugin.builders.data.download({ url: `https://pdb-dev.wwpdb.org/static/cif/${pdbDev.toUpperCase()}.cif`, isBinary: false });
-      const trajectory = await plugin.builders.structure.parseTrajectory(data, 'mmcif');
-      await plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default');
-    }
-
-    if (emdb) {
-      console.log('EMDB loading not yet implemented:', emdb);
-      // const data = await plugin.builders.data.download({ url: `https://www.ebi.ac.uk/pdbe/static/entry/emdb_${emdb}.map.gz`, isBinary: true });
-      // Volume loading will be implemented later
-    }
-
-    if (modelArchive) {
-      const data = await plugin.builders.data.download({ url: `https://www.modelarchive.org/doi/10.5452/${modelArchive}.cif`, isBinary: false });
-      const trajectory = await plugin.builders.structure.parseTrajectory(data, 'mmcif');
-      await plugin.builders.structure.hierarchy.applyPreset(trajectory, 'default');
-    }
-  } catch (loadError) {
-    console.warn('Error loading data:', loadError);
-  }
-
-  // Execute custom load command if provided
-  if (loadCommand) {
-    try {
-      // Safely evaluate the load command
-      const func = new Function('plugin', loadCommand);
-      func(plugin);
-    } catch (cmdError) {
-      console.warn('Error executing load command:', cmdError);
-    }
-  }
-
-  console.log('Plugin UI components:', plugin.spec.components);
-
   return plugin;
 }
+
+class MyCustomTab extends PluginUIComponent {
+  render() {
+    return (
+      <div>
+        <div className='msp-section-header'>我的自定义功能</div>
+        {/* 你的自定义内容 */}
+      </div>
+    );
+  }
+}
+
+class EnhancedStructureTools extends PluginUIComponent {
+  render() {
+    return (
+      <>
+        <DefaultStructureTools />
+        <MyCustomTab />
+      </>
+    );
+  }
+}
+ 

@@ -1,3 +1,5 @@
 *.vsix
 .DS_Store
 node_modules/
+
+mol-plugin/node_modules/
